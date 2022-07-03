@@ -62,6 +62,7 @@ int int_print_help() {
 }
 
 int int_proc_cmd(char* pr, size_t index) {
+	if (pr[index-1] == '\\') return;
 	index++;
 	switch(pr[index]) {
 		case 'd':
@@ -90,6 +91,15 @@ int int_proc_cmd(char* pr, size_t index) {
 			break;
 		case 'h':
 			int_print_help();
+			break;
+		case 'n':
+			printf("%d", int_ptr);
+			break;
+		case 's':
+			break;
+		case '\\': break;
+		default:
+			printf("Unknown BrainHeck \\%c command.", pr[index]);
 			break;
 	}
 }
