@@ -24,3 +24,7 @@ Basic functions:<br/>
 \i() - Include contents of another file
 ```
 For now, none of these functions are implemented.
+
+#### Program array and pointer
+Program array should not be of a fixed size. It should dynamically reallocate if necessary.<br/>
+Pointer could be implemented in any way possible
