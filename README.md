@@ -1,5 +1,6 @@
 # BrainHeck
-Just the casual brainfuck but improved
+Just the casual brainfuck but improved<br/>
+This code was tested with `tcc main.c` with tcc v0.9.27 running on windows 10
 
 # Concept
 It should be able to be compiled into standalone executable file<br/>
