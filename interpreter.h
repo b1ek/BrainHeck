@@ -38,6 +38,8 @@ int int_proc_char() {
 	
 }
 
+#define array_resize(arr, unitsize, newsz) arr = realloc(arr, (newsz) * (unitsz)); arr[newsz] = 0;
+
 int int_run() {
 	printf("BrainHeck interpreter\n  v. 1.0.0 - made by blek\n  Use \\h to display help menu.\n");
 	int_reset();
@@ -45,6 +47,12 @@ int int_run() {
 		printf("\n> ");
 		char in[1024];
 		fgets(in, 1024, stdin);
+		
+		size_t* loops = malloc(sizeof(size_t));
+		loops[0] = 0;
+		size_t scope = 0;
+		size_t loop_sz = 1;
+		
 		for (size_t i = 0; i != strlen(in); i++) {
 			switch (in[i]) {
 				case 'q': exit(0);
@@ -73,8 +81,20 @@ int int_run() {
 				case '<':
 					int_dec_ptr("<stdin>", i);
 					break;
-				case 'd':
-					printf("%d", int_program[int_ptr]);
+				case '[':
+					if (loop_sz < scope + 1) {
+						loop_sz++;
+						loops = realloc(loops, loop_sz * sizeof(size_t));
+					}
+					scope++;
+					loops[scope] = i;
+					break;
+				case ']':
+					if (int_program[int_ptr] == 0){
+						scope--;
+					} else {
+						i = loops[scope]+1;
+					}
 					break;
 			}
 		}
