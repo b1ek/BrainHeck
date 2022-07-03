@@ -61,6 +61,30 @@ int int_print_help() {
 );
 }
 
+char* int_cmd_brackets(char* pr, size_t open_bracket) {
+	char* buffer = malloc(sizeof(char));
+	open_bracket++;
+	buffer[0] = pr[open_bracket];
+	
+	size_t buffer_sz = sizeof(char);
+	
+	for (size_t i = open_bracket+1;; i++) {
+		if (pr[i] != ')') {
+			buffer_sz++;
+			buffer = realloc(buffer, buffer_sz*sizeof(char));
+			buffer[buffer_sz-1] = pr[i];
+		} else break;
+		if (i == strlen(pr) + 1) {
+			bh_err(open_bracket, "?", "Unmatched bracket \"(\"");
+			exit(0);
+		}
+	}
+	buffer_sz++;
+	buffer = realloc(buffer, buffer_sz*sizeof(char));
+	buffer[buffer_sz-1] = '\0';
+	return buffer;
+}
+
 int int_proc_cmd(char* pr, size_t index) {
 	if (pr[index-1] == '\\') return;
 	index++;
@@ -95,9 +119,10 @@ int int_proc_cmd(char* pr, size_t index) {
 		case 'n':
 			printf("%d", int_ptr);
 			break;
-		case 's':
+		case 'p':
+			;char* args = int_cmd_brackets(pr, index+1);
+			printf(args);
 			break;
-		case '\\': break;
 		default:
 			printf("Unknown BrainHeck \\%c command.", pr[index]);
 			break;
