@@ -7,7 +7,7 @@
 
 #include "brainheck.h"
 
-char* int_program;
+unsigned char* int_program;
 size_t int_ptr = 0;
 size_t int_pr_sz = 0;
 
@@ -57,9 +57,10 @@ int int_run() {
 			switch (in[i]) {
 				case 'q': exit(0);
 				case '+':
-					int_program[int_ptr]++;
 					if (int_program[int_ptr] == 0xFF) {
 						bh_err(i, "<stdin>", "Attempt to increase pointer to more than max char value (255).");
+					} else {
+						int_program[int_ptr]++;
 					}
 					break;
 				case '-':
@@ -93,8 +94,11 @@ int int_run() {
 					if (int_program[int_ptr] == 0){
 						scope--;
 					} else {
-						i = loops[scope]+1;
+						i = loops[scope];
 					}
+					break;
+				case 'd':
+					printf("%d", int_program[int_ptr]);
 					break;
 			}
 		}
