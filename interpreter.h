@@ -11,12 +11,18 @@ unsigned char* int_program;
 size_t int_ptr = 0;
 size_t int_pr_sz = 0;
 
+char* int_user_input;
+size_t int_program_index = 0;
+
 int int_reset() {
 	free(int_program);
 	int_program = malloc(sizeof(char));
 	int_program[0] = 0;
 	int_ptr = 0;
 	int_pr_sz = 1;
+	
+	free(int_user_input);
+	int_program_index = 0;
 }
 int int_inc_ptr() {
 	if (int_ptr + 2 > int_pr_sz) {
@@ -34,13 +40,8 @@ int int_dec_ptr(char* fn, int index) {
 	int_ptr--;
 }
 
-int int_proc_char() {
-	
-}
-
 int int_print_help() {
 	printf(
-// help
 "\n"
 "---\n"
 "BrainHeck commands\n"
@@ -48,11 +49,11 @@ int int_print_help() {
 "\\d   - Print the current pointer value as decimal number\n"
 "\\n   - Print the current pointer position\n"
 "\\q   - Exit the program\n"
-"\\\\   - No-op, if you want to use \ symbol in comments about code so desperately\n"
-"\\s() - Run some system command, like \s(clear) will clear the screen\n"
-"\\p() - Print message, like \p(Hello world) is a basic hello world in brainHeck\n"
-"\\q() - Exit program with exit code, like \q(60) will exit the program with exit code 60. Non-number value like \q(abc) should produce a critical error.\n"
-"\\j() - Jump to pointer value, like \j(2) will jump to pointer at index 2 (3rd position in array)\n"
+"\\\\   - No-op, if you want to use \\ symbol in comments about code so desperately\n"
+"\\s() - Run some system command, like \\s(clear) will clear the screen\n"
+"\\p() - Print message, like \\p(Hello world) is a basic hello world in brainHeck\n"
+"\\q() - Exit program with exit code, like \\q(60) will exit the program with exit code 60.\n"
+"\\j() - Jump to pointer value, like \\j(2) will jump to pointer at index 2 (3rd position in array)\n"
 "\\f() - Write the pointer value to file in append mode.\n"
 "\\a() - Delete file\n"
 "\\s() - Jump to char at index\n"
@@ -61,6 +62,7 @@ int int_print_help() {
 );
 }
 
+// this function gets the contents of the brackets
 char* int_cmd_brackets(char* pr, size_t open_bracket) {
 	char* buffer = malloc(sizeof(char));
 	open_bracket++;
@@ -119,10 +121,17 @@ int int_proc_cmd(char* pr, size_t index) {
 		case 'n':
 			printf("%d", int_ptr);
 			break;
-		case 'p':
+		case 'p': {
 			;char* args = int_cmd_brackets(pr, index+1);
 			printf(args);
 			break;
+		}
+		case 's': {
+			;char* args = int_cmd_brackets(pr, index+1);
+			system(args);
+			break;
+		}
+		case '\\': break;
 		default:
 			printf("Unknown BrainHeck \\%c command.", pr[index]);
 			break;
@@ -138,6 +147,8 @@ int int_run() {
 		printf("\n> ");
 		char in[1024];
 		fgets(in, 1024, stdin);
+		int_user_input = in;
+		int_program_index = 0;
 		
 		size_t* loops = malloc(sizeof(size_t));
 		loops[0] = 0;
@@ -145,6 +156,7 @@ int int_run() {
 		size_t loop_sz = 1;
 		
 		for (size_t i = 0; i != strlen(in); i++) {
+			int_program_index = i;
 			switch (in[i]) {
 				case '+':
 					if (int_program[int_ptr] == 0xFF) {
