@@ -2,6 +2,7 @@
 #define BH_STR_H
 
 #include <stdlib.h>
+#include <string.h>
 
 size_t bh_strlen(char* s) {
 	int i = 0;
