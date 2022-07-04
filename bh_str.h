@@ -41,4 +41,17 @@ const char* bh_dtos(int d) {
 	return strrev(buffer); // the string has to be reversed
 }
 
+int bh_stod(char* in) {
+	int out = 0;
+	
+	for (size_t i = 0; in[i] != '\0'; i++) {
+		if (in[i] >= 48 && in[i] <= 57) {
+			out *= 10;
+			out += in[i] - 48;
+		}
+	}
+	if (in[0] == '-') return -out;
+	return out;
+}
+
 #endif//BH_STR_H

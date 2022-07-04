@@ -57,12 +57,14 @@ int int_print_help() {
 "\\f() - Write the pointer value to file in append mode.\n"
 "\\a() - Delete file\n"
 "\\s() - Jump to char at index\n"
-"\\i() - Include contents of another file\n"
+"\\int_program_index() - Include contents of another file\n"
 "---\n"
 );
 }
 
 // this function gets the contents of the brackets
+// pr - the whole program
+// open_bracket - 1st argument char, NOT OPENING BRACKET
 char* int_cmd_brackets(char* pr, size_t open_bracket) {
 	char* buffer = malloc(sizeof(char));
 	open_bracket++;
@@ -70,13 +72,13 @@ char* int_cmd_brackets(char* pr, size_t open_bracket) {
 	
 	size_t buffer_sz = sizeof(char);
 	
-	for (size_t i = open_bracket+1;; i++) {
-		if (pr[i] != ')') {
+	for (size_t int_program_index = open_bracket+1;; int_program_index++) {
+		if (pr[int_program_index] != ')') {
 			buffer_sz++;
 			buffer = realloc(buffer, buffer_sz*sizeof(char));
-			buffer[buffer_sz-1] = pr[i];
+			buffer[buffer_sz-1] = pr[int_program_index];
 		} else break;
-		if (i == strlen(pr) + 1) {
+		if (int_program_index == strlen(pr) + 1) {
 			bh_err(open_bracket, "?", "Unmatched bracket \"(\"");
 			exit(0);
 		}
@@ -87,7 +89,18 @@ char* int_cmd_brackets(char* pr, size_t open_bracket) {
 	return buffer;
 }
 
-int int_proc_cmd(char* pr, size_t index) {
+int str_is_int(char* in) {
+	size_t i = 0;
+	if (in[0] == '-') i++;
+	for (; in[i] != '\0'; i++) {
+		if (!(in[i] >= 48 && in[i] <= 57)) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+void int_proc_cmd(char* pr, size_t index) {
 	if (pr[index-1] == '\\') return;
 	index++;
 	switch(pr[index]) {
@@ -96,21 +109,10 @@ int int_proc_cmd(char* pr, size_t index) {
 			break;
 		case 'q':
 			if (pr[index+1] == '(') {
-				int exitCode = 0;
-				int offset = 1;
-				if (pr[index+2] == '-') offset=2;				
-				
-				for (size_t i = index+offset; pr[i] != ')'; i++) {
-					if (pr[i] >= 48 && pr[i] <= 57) {
-						exitCode = (exitCode * 10) + (pr[i] - 48);
-					}
-					if (i == strlen(pr)) {
-						printf("\nError: unmatched \"(\" at index %d\n", index);
-						exit(-1);
-					}
-				}
-				if (offset == 2) exitCode *= -1;
-				exit(exitCode);
+				char* args = int_cmd_brackets(pr, index+1);
+				if (!str_is_int(args)) {bh_err(index, "?", "Invalid argument format at \\q(...)");exit(-1);}
+				exit(bh_stod(args));
+				return;
 			}
 			printf("Bye\n");
 			exit(0);
@@ -122,14 +124,35 @@ int int_proc_cmd(char* pr, size_t index) {
 			printf("%d", int_ptr);
 			break;
 		case 'p': {
-			;char* args = int_cmd_brackets(pr, index+1);
+			if (pr[index + 1] != '(') {
+				bh_err(index, "?", "This function requires arguments");
+				exit(-1);
+			}
+			char* args = int_cmd_brackets(pr, index+1);
 			printf(args);
 			break;
 		}
 		case 's': {
-			;char* args = int_cmd_brackets(pr, index+1);
+			if (pr[index + 1] != '(') {
+				bh_err(index, "?", "This function requires arguments");
+				exit(-1);
+			}
+			char* args = int_cmd_brackets(pr, index+1);
 			system(args);
 			break;
+		}
+		case 'j': {
+			char* args = int_cmd_brackets(pr, index+1);
+			if (!str_is_int(args)) {
+				bh_err(index, "?", "Invalid arguments format; Put a number of pointer to which jump to");
+				exit(0);
+			}
+			if (int_pr_sz-1 >= bh_stod(args)) {
+				int_ptr = bh_stod(args);
+			} else {
+				printf("Warning: jumping to non-allocated pointer at index %d", index);
+			}
+			
 		}
 		case '\\': break;
 		default:
@@ -155,19 +178,18 @@ int int_run() {
 		size_t scope = 0;
 		size_t loop_sz = 1;
 		
-		for (size_t i = 0; i != strlen(in); i++) {
-			int_program_index = i;
-			switch (in[i]) {
+		for (int_program_index = 0; int_program_index != strlen(in); int_program_index++) {
+			switch (in[int_program_index]) {
 				case '+':
 					if (int_program[int_ptr] == 0xFF) {
-						bh_err(i, "<stdin>", "Attempt to increase pointer to more than max char value (255).");
+						bh_err(int_program_index, "<stdin>", "Attempt to increase pointer to more than max char value (255).");
 					} else {
 						int_program[int_ptr]++;
 					}
 					break;
 				case '-':
 					if (int_program[int_ptr] == 0) {
-						bh_err(i, "<stdin>", "Attempt to decrease pointer value to negative");
+						bh_err(int_program_index, "<stdin>", "Attempt to decrease pointer value to negative");
 					} else {
 						int_program[int_ptr]--;
 					}
@@ -182,7 +204,7 @@ int int_run() {
 					int_inc_ptr();
 					break;
 				case '<':
-					int_dec_ptr("<stdin>", i);
+					int_dec_ptr("<stdin>", int_program_index);
 					break;
 				case '[':
 					if (loop_sz < scope + 1) {
@@ -190,17 +212,17 @@ int int_run() {
 						loops = realloc(loops, loop_sz * sizeof(size_t));
 					}
 					scope++;
-					loops[scope] = i;
+					loops[scope] = int_program_index;
 					break;
 				case ']':
 					if (int_program[int_ptr] == 0){
 						scope--;
 					} else {
-						i = loops[scope];
+						int_program_index = loops[scope];
 					}
 					break;
 				case '\\':
-					int_proc_cmd(in, i);
+					int_proc_cmd(in, int_program_index);
 			}
 		}
 	}
