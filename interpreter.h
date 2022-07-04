@@ -89,6 +89,11 @@ char* int_cmd_brackets(char* pr, size_t open_bracket) {
 	return buffer;
 }
 
+int int_get_close_bracket(char* pr, size_t i) {
+	for (; pr[i] != ')'; i++);
+	return i;
+}
+
 int str_is_int(char* in) {
 	size_t i = 0;
 	if (in[0] == '-') i++;
@@ -100,8 +105,8 @@ int str_is_int(char* in) {
 	return 1;
 }
 
-void int_proc_cmd(char* pr, size_t index) {
-	if (pr[index-1] == '\\') return;
+int int_proc_cmd(char* pr, size_t index) {
+	if (pr[index-1] == '\\') return 0;
 	index++;
 	switch(pr[index]) {
 		case 'd':
@@ -112,7 +117,6 @@ void int_proc_cmd(char* pr, size_t index) {
 				char* args = int_cmd_brackets(pr, index+1);
 				if (!str_is_int(args)) {bh_err(index, "?", "Invalid argument format at \\q(...)");exit(-1);}
 				exit(bh_stod(args));
-				return;
 			}
 			printf("Bye\n");
 			exit(0);
@@ -130,7 +134,8 @@ void int_proc_cmd(char* pr, size_t index) {
 			}
 			char* args = int_cmd_brackets(pr, index+1);
 			printf(args);
-			break;
+			
+			return int_get_close_bracket(pr, index+1);
 		}
 		case 's': {
 			if (pr[index + 1] != '(') {
@@ -139,7 +144,7 @@ void int_proc_cmd(char* pr, size_t index) {
 			}
 			char* args = int_cmd_brackets(pr, index+1);
 			system(args);
-			break;
+			return int_get_close_bracket(pr, index+1);
 		}
 		case 'j': {
 			char* args = int_cmd_brackets(pr, index+1);
@@ -152,13 +157,30 @@ void int_proc_cmd(char* pr, size_t index) {
 			} else {
 				printf("Warning: jumping to non-allocated pointer at index %d", index);
 			}
-			
+			return int_get_close_bracket(pr, index+1);			
 		}
+		
+		case 'f':
+			if (pr[index + 1] != '(') {
+				bh_err(index, "?", "This function requires arguments");
+				exit(-1);
+			}
+			char* args = int_cmd_brackets(pr, index+1);
+			FILE* fp = fopen(args, "a");
+			if (fp == 0) {
+				bh_err(index, "?", "Cannot open file!");
+			}
+			char data[2] = {int_program[int_ptr], 0};
+			fputs(data, fp);
+			fclose(fp);
+			return int_get_close_bracket(pr, index+1);
+		
 		case '\\': break;
 		default:
 			printf("Unknown BrainHeck \\%c command.", pr[index]);
 			break;
 	}
+	return 0;
 }
 
 #define array_resize(arr, unitsize, newsz) arr = realloc(arr, (newsz) * (unitsz)); arr[newsz] = 0;
@@ -221,8 +243,11 @@ int int_run() {
 						int_program_index = loops[scope];
 					}
 					break;
-				case '\\':
-					int_proc_cmd(in, int_program_index);
+				case '\\':;
+					int newIndex = int_proc_cmd(in, int_program_index);
+					if (newIndex != 0) {
+						int_program_index = newIndex;
+					}
 			}
 		}
 	}

@@ -54,4 +54,8 @@ int bh_stod(char* in) {
 	return out;
 }
 
+const char* bh_str_replace(const char* source, const char* search, const char* replace) {
+	
+}
+
 #endif//BH_STR_H
