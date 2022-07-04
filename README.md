@@ -19,9 +19,9 @@ Basic functions:<br/>
 \p() - Print message, like \p(Hello world) is a basic hello world in brainHeck [IMPLEMENTED]
 \q() - Exit program with exit code, like \q(60) will exit the program with exit code 60. Non-number value like \q(abc) should produce a critical error. [IMPLEMENTED]
 \j() - Jump to pointer value, like \j(2) will jump to pointer at index 2 (3rd position in array) [IMPLEMENTED]
-\f() - Write the pointer value to file in append mode.
-\a() - Delete file
-\l() - Jump to char at index
+\f() - Write the pointer value to file in append mode. [IMPLEMENTED]
+\a() - Delete file [IMPLEMENTED]
+\l() - Jump to char at index [IMPLEMENTED]
 \i() - Include contents of another file
 ```
 For now, none of these functions are implemented.

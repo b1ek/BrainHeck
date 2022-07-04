@@ -147,10 +147,14 @@ int int_proc_cmd(char* pr, size_t index) {
 			return int_get_close_bracket(pr, index+1);
 		}
 		case 'j': {
+			if (pr[index + 1] != '(') {
+				bh_err(index, "?", "This function requires arguments");
+				exit(-1);
+			}
 			char* args = int_cmd_brackets(pr, index+1);
 			if (!str_is_int(args)) {
-				bh_err(index, "?", "Invalid arguments format; Put a number of pointer to which jump to");
-				exit(0);
+				bh_err(index, "?", "Invalid arguments format: put a number of pointer to which jump to");
+				exit(-1);
 			}
 			if (int_pr_sz-1 >= bh_stod(args)) {
 				int_ptr = bh_stod(args);
@@ -170,11 +174,29 @@ int int_proc_cmd(char* pr, size_t index) {
 			if (fp == 0) {
 				bh_err(index, "?", "Cannot open file!");
 			}
-			char data[2] = {int_program[int_ptr], 0};
-			fputs(data, fp);
+			fputc(int_program[int_ptr], fp);
 			fclose(fp);
 			return int_get_close_bracket(pr, index+1);
-		
+		case 'a':
+			if (pr[index+1] != '(') {
+				bh_err(index, "?", "This function requires arguments");
+				exit(-1);
+			}
+			remove(int_cmd_brackets(pr, index + 1));
+			return int_get_close_bracket(pr, index + 1);
+		case 'l': {
+			if (pr[index+1] != '(') {
+				bh_err(index, "?", "This function requires arguments");
+				exit(-1);
+			}
+			char* args = int_cmd_brackets(pr, index + 1);
+			if (!str_is_int(args)) {
+				bh_err(index, "?", "Invalid arguments format: put a number");
+				exit(-1);
+			}
+			return bh_stod(args) - 1;
+		}
+			
 		case '\\': break;
 		default:
 			printf("Unknown BrainHeck \\%c command.", pr[index]);
@@ -185,6 +207,68 @@ int int_proc_cmd(char* pr, size_t index) {
 
 #define array_resize(arr, unitsize, newsz) arr = realloc(arr, (newsz) * (unitsz)); arr[newsz] = 0;
 
+int int_proc_string(char* input, char* __filename) {
+	int_user_input = input;
+	int_program_index = 0;
+	
+	size_t* loops = malloc(sizeof(size_t));
+	loops[0] = 0;
+	size_t scope = 0;
+	size_t loop_sz = 1;
+	
+	for (int_program_index = 0; int_program_index != strlen(int_user_input); int_program_index++) {
+		switch (int_user_input[int_program_index]) {
+			case '+':
+				if (int_program[int_ptr] == 0xFF) {
+					bh_err(int_program_index, __filename, "Attempt to increase pointer to more than max char value (255).");
+				} else {
+					int_program[int_ptr]++;
+				}
+				break;
+			case '-':
+				if (int_program[int_ptr] == 0) {
+					bh_err(int_program_index, __filename, "Attempt to decrease pointer value to negative");
+				} else {
+					int_program[int_ptr]--;
+				}
+				break;
+			case '.':
+				putchar(int_program[int_ptr]);
+				break;
+			case ',':
+				int_program[int_ptr] = getchar();
+				break;
+			case '>':
+				int_inc_ptr();
+				break;
+			case '<':
+				int_dec_ptr(__filename, int_program_index);
+				break;
+			case '[':
+				if (loop_sz < scope + 1) {
+					loop_sz++;
+					loops = realloc(loops, loop_sz * sizeof(size_t));
+				}
+				scope++;
+				loops[scope] = int_program_index;
+				break;
+			case ']':
+				if (int_program[int_ptr] == 0){
+					scope--;
+				} else {
+					int_program_index = loops[scope];
+				}
+				break;
+			case '\\':;
+				int newIndex = int_proc_cmd(input, int_program_index);
+				if (newIndex != 0) {
+					int_program_index = newIndex;
+				}
+				break;
+		}
+	}
+}
+
 int int_run() {
 	printf("BrainHeck interpreter\n  v. 1.0.0 - made by blek\n  Use \\h to display help menu.\n");
 	int_reset();
@@ -192,64 +276,7 @@ int int_run() {
 		printf("\n> ");
 		char in[1024];
 		fgets(in, 1024, stdin);
-		int_user_input = in;
-		int_program_index = 0;
-		
-		size_t* loops = malloc(sizeof(size_t));
-		loops[0] = 0;
-		size_t scope = 0;
-		size_t loop_sz = 1;
-		
-		for (int_program_index = 0; int_program_index != strlen(in); int_program_index++) {
-			switch (in[int_program_index]) {
-				case '+':
-					if (int_program[int_ptr] == 0xFF) {
-						bh_err(int_program_index, "<stdin>", "Attempt to increase pointer to more than max char value (255).");
-					} else {
-						int_program[int_ptr]++;
-					}
-					break;
-				case '-':
-					if (int_program[int_ptr] == 0) {
-						bh_err(int_program_index, "<stdin>", "Attempt to decrease pointer value to negative");
-					} else {
-						int_program[int_ptr]--;
-					}
-					break;
-				case '.':
-					putchar(int_program[int_ptr]);
-					break;
-				case ',':
-					int_program[int_ptr] = getchar();
-					break;
-				case '>':
-					int_inc_ptr();
-					break;
-				case '<':
-					int_dec_ptr("<stdin>", int_program_index);
-					break;
-				case '[':
-					if (loop_sz < scope + 1) {
-						loop_sz++;
-						loops = realloc(loops, loop_sz * sizeof(size_t));
-					}
-					scope++;
-					loops[scope] = int_program_index;
-					break;
-				case ']':
-					if (int_program[int_ptr] == 0){
-						scope--;
-					} else {
-						int_program_index = loops[scope];
-					}
-					break;
-				case '\\':;
-					int newIndex = int_proc_cmd(in, int_program_index);
-					if (newIndex != 0) {
-						int_program_index = newIndex;
-					}
-			}
-		}
+		int_proc_string(in, "<stdin>");
 	}
 }
 
