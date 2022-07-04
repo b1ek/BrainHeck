@@ -21,7 +21,7 @@ Basic functions:<br/>
 \j() - Jump to pointer value, like \j(2) will jump to pointer at index 2 (3rd position in array)
 \f() - Write the pointer value to file in append mode.
 \a() - Delete file
-\f() - Jump to char at index
+\l() - Jump to char at index
 \i() - Include contents of another file
 ```
 For now, none of these functions are implemented.
