@@ -56,8 +56,8 @@ int int_print_help() {
 "\\j() - Jump to pointer value, like \\j(2) will jump to pointer at index 2 (3rd position in array)\n"
 "\\f() - Write the pointer value to file in append mode.\n"
 "\\a() - Delete file\n"
-"\\s() - Jump to char at index\n"
-"\\int_program_index() - Include contents of another file\n"
+"\\j() - Jump to char at index\n"
+"\\i() - Include contents of another file\n"
 "---\n"
 );
 }
@@ -196,8 +196,19 @@ int int_proc_cmd(char* pr, size_t index) {
 			}
 			return bh_stod(args) - 1;
 		}
+		case 'i':
+			return int_get_close_bracket(pr, index + 1);
 			
 		case '\\': break;
+		case '\n':
+			bh_err(index, "?", "No command.");
+			break;
+		case '\r':
+			bh_err(index, "?", "No command.");
+			break;
+		case '\0':
+			bh_err(index, "?", "No command.");
+			break;
 		default:
 			printf("Unknown BrainHeck \\%c command.", pr[index]);
 			break;
