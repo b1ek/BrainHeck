@@ -249,42 +249,40 @@ int int_proc_cmd(char* pr, size_t index) {
 
 #define array_resize(arr, unitsize, newsz) arr = realloc(arr, (newsz) * (unitsz)); arr[newsz] = 0;
 
-int int_proc_string(char* input, char* __filename) {
-	int_user_input = input;
-	int_program_index = 0;
-	
+int int_proc_string(char* input, char* __filename) {	
 	size_t* loops = malloc(sizeof(size_t));
 	loops[0] = 0;
 	size_t scope = 0;
 	size_t loop_sz = 1;
+	int ptr = 0;
 	
-	for (int_program_index = 0; int_program_index != strlen(int_user_input); int_program_index++) {
-		switch (int_user_input[int_program_index]) {
+	for (size_t i = 0; i != strlen(input); i++) {
+		switch (input[i]) {
 			case '+':
-				if (int_program[int_ptr] == 0xFF) {
-					bh_err(int_program_index, __filename, "Attempt to increase pointer to more than max char value (255).");
+				if (input[ptr] == 0xFF) {
+					bh_err(i, __filename, "Attempt to increase pointer to more than max char value (255).");
 				} else {
-					int_program[int_ptr]++;
+					input[ptr]++;
 				}
 				break;
 			case '-':
-				if (int_program[int_ptr] == 0) {
-					bh_err(int_program_index, __filename, "Attempt to decrease pointer value to negative");
+				if (input[ptr] == 0) {
+					bh_err(i, __filename, "Attempt to decrease pointer value to negative");
 				} else {
-					int_program[int_ptr]--;
+					input[ptr]--;
 				}
 				break;
 			case '.':
-				putchar(int_program[int_ptr]);
+				putchar(input[ptr]);
 				break;
 			case ',':
-				int_program[int_ptr] = getchar();
+				input[ptr] = getchar();
 				break;
 			case '>':
 				int_inc_ptr();
 				break;
 			case '<':
-				int_dec_ptr(__filename, int_program_index);
+				int_dec_ptr(__filename, i);
 				break;
 			case '[':
 				if (loop_sz < scope + 1) {
@@ -292,19 +290,19 @@ int int_proc_string(char* input, char* __filename) {
 					loops = realloc(loops, loop_sz * sizeof(size_t));
 				}
 				scope++;
-				loops[scope] = int_program_index;
+				loops[scope] = i;
 				break;
 			case ']':
-				if (int_program[int_ptr] == 0){
+				if (input[ptr] == 0){
 					scope--;
 				} else {
-					int_program_index = loops[scope];
+					i = loops[scope];
 				}
 				break;
 			case '\\':;
-				int newIndex = int_proc_cmd(input, int_program_index);
+				int newIndex = int_proc_cmd(input, i);
 				if (newIndex != 0) {
-					int_program_index = newIndex;
+					i = newIndex;
 				}
 				break;
 		}
