@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+//#include <unistd.h>
 
 #include "brainheck.h"
 
@@ -68,6 +69,7 @@ int int_print_help() {
 char* int_cmd_brackets(char* pr, size_t open_bracket) {
 	char* buffer = malloc(sizeof(char));
 	open_bracket++;
+	if (pr[open_bracket] == ')') return "";
 	buffer[0] = pr[open_bracket];
 	
 	size_t buffer_sz = sizeof(char);
@@ -105,6 +107,8 @@ int str_is_int(char* in) {
 	return 1;
 }
 
+int int_proc_string(char* input, char* __filename);
+
 int int_proc_cmd(char* pr, size_t index) {
 	if (pr[index-1] == '\\') return 0;
 	index++;
@@ -115,6 +119,7 @@ int int_proc_cmd(char* pr, size_t index) {
 		case 'q':
 			if (pr[index+1] == '(') {
 				char* args = int_cmd_brackets(pr, index+1);
+				
 				if (!str_is_int(args)) {bh_err(index, "?", "Invalid argument format at \\q(...)");exit(-1);}
 				exit(bh_stod(args));
 			}
@@ -196,9 +201,32 @@ int int_proc_cmd(char* pr, size_t index) {
 			}
 			return bh_stod(args) - 1;
 		}
-		case 'i':
-			return int_get_close_bracket(pr, index + 1);
+		case 'i': {
+			if (pr[index + 1] != '(') {
+				bh_err(index, "?", "This function requires arguments");
+				exit(-1);
+			}
+			char* args = int_cmd_brackets(pr, index + 1);
 			
+			FILE* file = fopen(args, "r");
+			if (file) {
+				
+				signed char c = 0;
+				char* buffer = malloc(0);
+				size_t buffer_sz = 0;
+				while ((c = fgetc(file)) != EOF) {
+					buffer_sz++;
+					buffer = realloc(buffer, buffer_sz);
+					buffer[buffer_sz - 1] = c;
+				}
+				int_proc_string(buffer, args);
+				
+				fclose(file);
+			}
+			
+			return int_get_close_bracket(pr, index + 1);
+		}
+		
 		case '\\': break;
 		case '\n':
 			bh_err(index, "?", "No command.");
@@ -211,6 +239,9 @@ int int_proc_cmd(char* pr, size_t index) {
 			break;
 		default:
 			printf("Unknown BrainHeck \\%c command.", pr[index]);
+			if (pr[index + 1] == '(') {
+				return int_get_close_bracket(pr, index + 1);
+			}
 			break;
 	}
 	return 0;
