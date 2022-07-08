@@ -200,16 +200,12 @@ int int_proc_cmd(char* pr, size_t index) {
 			}
 			return bh_stod(args) - 1;
 		}
-<<<<<<< HEAD
-=======
 		case 'i': {
 			if (pr[index + 1] != '(') {
 				bh_err(index, "?", "This function requires arguments");
 				exit(-1);
 			}
 			char* args = int_cmd_brackets(pr, index + 1);
->>>>>>> 9e2c357ee0de13a7e51923f4af82f7a9fa83cf8b
-			
 			FILE* file = fopen(args, "r");
 			if (file) {
 				
