@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+//#include <unistd.h>
 
 #include "brainheck.h"
 
@@ -67,6 +68,7 @@ int int_print_help() {
 char* int_cmd_brackets(char* pr, size_t open_bracket) {
 	char* buffer = malloc(sizeof(char));
 	open_bracket++;
+	if (pr[open_bracket] == ')') return "";
 	buffer[0] = pr[open_bracket];
 	
 	size_t buffer_sz = sizeof(char);
@@ -104,6 +106,8 @@ int str_is_int(char* in) {
 	return 1;
 }
 
+int int_proc_string(char* input, char* __filename);
+
 int int_proc_cmd(char* pr, size_t index) {
 	if (pr[index-1] == '\\') return 0;
 	index++;
@@ -114,6 +118,7 @@ int int_proc_cmd(char* pr, size_t index) {
 		case 'q':
 			if (pr[index+1] == '(') {
 				char* args = int_cmd_brackets(pr, index+1);
+				
 				if (!str_is_int(args)) {bh_err(index, "?", "Invalid argument format at \\q(...)");exit(-1);}
 				exit(bh_stod(args));
 			}
@@ -195,7 +200,35 @@ int int_proc_cmd(char* pr, size_t index) {
 			}
 			return bh_stod(args) - 1;
 		}
+<<<<<<< HEAD
+=======
+		case 'i': {
+			if (pr[index + 1] != '(') {
+				bh_err(index, "?", "This function requires arguments");
+				exit(-1);
+			}
+			char* args = int_cmd_brackets(pr, index + 1);
+>>>>>>> 9e2c357ee0de13a7e51923f4af82f7a9fa83cf8b
 			
+			FILE* file = fopen(args, "r");
+			if (file) {
+				
+				signed char c = 0;
+				char* buffer = malloc(0);
+				size_t buffer_sz = 0;
+				while ((c = fgetc(file)) != EOF) {
+					buffer_sz++;
+					buffer = realloc(buffer, buffer_sz);
+					buffer[buffer_sz - 1] = c;
+				}
+				int_proc_string(buffer, args);
+				
+				fclose(file);
+			}
+			
+			return int_get_close_bracket(pr, index + 1);
+		}
+		
 		case '\\': break;
 		case '\n':
 			bh_err(index, "?", "No command.");
@@ -208,6 +241,9 @@ int int_proc_cmd(char* pr, size_t index) {
 			break;
 		default:
 			printf("Unknown BrainHeck \\%c command.", pr[index]);
+			if (pr[index + 1] == '(') {
+				return int_get_close_bracket(pr, index + 1);
+			}
 			break;
 	}
 	return 0;
@@ -215,42 +251,40 @@ int int_proc_cmd(char* pr, size_t index) {
 
 #define array_resize(arr, unitsize, newsz) arr = realloc(arr, (newsz) * (unitsz)); arr[newsz] = 0;
 
-int int_proc_string(char* input, char* __filename) {
-	int_user_input = input;
-	int_program_index = 0;
-	
+int int_proc_string(char* input, char* __filename) {	
 	size_t* loops = malloc(sizeof(size_t));
 	loops[0] = 0;
 	size_t scope = 0;
 	size_t loop_sz = 1;
+	int ptr = 0;
 	
-	for (int_program_index = 0; int_program_index != strlen(int_user_input); int_program_index++) {
-		switch (int_user_input[int_program_index]) {
+	for (size_t i = 0; i != strlen(input); i++) {
+		switch (input[i]) {
 			case '+':
-				if (int_program[int_ptr] == 0xFF) {
-					bh_err(int_program_index, __filename, "Attempt to increase pointer to more than max char value (255).");
+				if (input[ptr] == 0xFF) {
+					bh_err(i, __filename, "Attempt to increase pointer to more than max char value (255).");
 				} else {
-					int_program[int_ptr]++;
+					input[ptr]++;
 				}
 				break;
 			case '-':
-				if (int_program[int_ptr] == 0) {
-					bh_err(int_program_index, __filename, "Attempt to decrease pointer value to negative");
+				if (input[ptr] == 0) {
+					bh_err(i, __filename, "Attempt to decrease pointer value to negative");
 				} else {
-					int_program[int_ptr]--;
+					input[ptr]--;
 				}
 				break;
 			case '.':
-				putchar(int_program[int_ptr]);
+				putchar(input[ptr]);
 				break;
 			case ',':
-				int_program[int_ptr] = getchar();
+				input[ptr] = getchar();
 				break;
 			case '>':
 				int_inc_ptr();
 				break;
 			case '<':
-				int_dec_ptr(__filename, int_program_index);
+				int_dec_ptr(__filename, i);
 				break;
 			case '[':
 				if (loop_sz < scope + 1) {
@@ -258,19 +292,19 @@ int int_proc_string(char* input, char* __filename) {
 					loops = realloc(loops, loop_sz * sizeof(size_t));
 				}
 				scope++;
-				loops[scope] = int_program_index;
+				loops[scope] = i;
 				break;
 			case ']':
-				if (int_program[int_ptr] == 0){
+				if (input[ptr] == 0){
 					scope--;
 				} else {
-					int_program_index = loops[scope];
+					i = loops[scope];
 				}
 				break;
 			case '\\':;
-				int newIndex = int_proc_cmd(input, int_program_index);
+				int newIndex = int_proc_cmd(input, i);
 				if (newIndex != 0) {
-					int_program_index = newIndex;
+					i = newIndex;
 				}
 				break;
 		}
