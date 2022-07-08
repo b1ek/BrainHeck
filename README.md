@@ -22,10 +22,18 @@ Basic functions:<br/>
 \f() - Write the pointer value to file in append mode. [IMPLEMENTED]
 \a() - Delete file [IMPLEMENTED]
 \l() - Jump to char at index [IMPLEMENTED]
-\i() - Include contents of another file
 ```
-For now, none of these functions are implemented.
+For now, all of these functions are implemented in the interpreter.<br/>
+You are free to suggest any new features/functions, use the issues menu for that.
 
 #### Program array and pointer
 Program array should not be of a fixed size. It should dynamically reallocate if necessary.<br/>
 Pointer could be implemented in any way possible
+
+---
+
+## Basic programs
+#### Hello world
+`\p(Hello world!)` - Using a brainHeck function `\p()`<br/>
+`++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.` - In the plain old brainfuck<br/>
+`++++++++++[>+++++++>++++++++++>+++<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.` - Another hello world in brainfuck(but this is 5 chars shorter)<br/>
